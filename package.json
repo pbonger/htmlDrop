@@ -1,6 +1,6 @@
 {
   "name": "html-drop-plugin",
-  "version": "1.0.9",
+  "version": "1.0.11",
   "description": "WebStorm plugin — right-click any HTML file to share on HTML Drop",
   "scripts": {
     "install": "brew install openjdk@21 gradle gh terminal-notifier || true && gh auth login && gradle wrapper --gradle-version 8.8 && npm run install:finder",
@@ -11,7 +11,7 @@
     "build:app": "npm run icon:finder && cd finder && ./build-app.sh",
     "install:app": "cp -r finder/HTMLDrop.app /Applications/ && open /Applications/HTMLDrop.app",
     "install:finder": "cd finder && ./install.sh",
-    "package:all": "VERSION=$(node -p \"require('./package.json').version\") && mkdir -p build/release && cp build/distributions/html-drop-plugin-*.zip build/release/ && cp -r finder/HTMLDrop.workflow build/release/ && cp INSTALL.md build/release/README.md && (cd build/release && zip -r ../html-drop-v$VERSION.zip . --exclude '*/.DS_Store') && rm -rf build/release",
-    "release": "npm version patch --no-git-tag-version && VERSION=$(node -p \"require('./package.json').version\") && sed -i '' \"s/version = \\\"[^\\\"]*\\\"/version = \\\"$VERSION\\\"/\" build.gradle.kts && rm -rf build/distributions && npm run build && npm run build:finder && npm run package:finder && npm run package:all && gh release create v$VERSION build/html-drop-v$VERSION.zip --title \"HTML Drop v$VERSION\" --generate-notes"
+    "package:all": "VERSION=$(node -p \"require('./package.json').version\") && mkdir -p build/release && cp build/distributions/html-drop-plugin-*.zip build/release/ && cp -r finder/HTMLDrop.app build/release/ && cp INSTALL.md build/release/README.md && (cd build/release && zip -r ../html-drop-v$VERSION.zip . --exclude '*/.DS_Store' --exclude '*/_CodeSignature/*') && rm -rf build/release",
+    "release": "npm version patch --no-git-tag-version && VERSION=$(node -p \"require('./package.json').version\") && sed -i '' \"s/version = \\\"[^\\\"]*\\\"/version = \\\"$VERSION\\\"/\" build.gradle.kts && rm -rf build/distributions && npm run build && npm run build:app && npm run package:all && gh release create v$VERSION build/html-drop-v$VERSION.zip --title \"HTML Drop v$VERSION\" --generate-notes"
   }
 }

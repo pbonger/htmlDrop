@@ -111,7 +111,7 @@ document.getElementById('p').addEventListener('keydown',e=>{if(e.key==='Enter')g
 </html>"""
 
     private fun upload(html: String): String {
-        val json = """{"html":${jsonString(html)}}"""
+        val json = """{"html":${jsonString(html)},"ttl":"3d"}"""
         val client = HttpClient.newHttpClient()
         val res = client.send(
             HttpRequest.newBuilder()

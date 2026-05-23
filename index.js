@@ -10,7 +10,7 @@ if (!file) { console.error('Usage: html-drop <file.html>'); process.exit(1); }
   const res = await fetch('https://pagedrop.io/api/upload', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ html }),
+    body: JSON.stringify({ html, ttl: '3d' }),
   });
 
   if (!res.ok) throw new Error(`HTML Drop ${res.status}: ${await res.text()}`);

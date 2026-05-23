@@ -7,7 +7,7 @@ import CryptoKit
 // MARK: - Upload
 
 func htmlDropUpload(_ html: String) throws -> String {
-    let json = "{\"html\":\(jsonEscape(html))}"
+    let json = "{\"html\":\(jsonEscape(html)),\"ttl\":\"3d\"}"
     var req = URLRequest(url: URL(string: "https://pagedrop.io/api/upload")!)
     req.httpMethod = "POST"
     req.setValue("application/json", forHTTPHeaderField: "Content-Type")

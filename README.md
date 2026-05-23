@@ -6,16 +6,16 @@ Optionally password-protects the page with client-side AES-256 encryption.
 
 Available as a **WebStorm plugin** and a **macOS Finder Quick Action**.
 
-## Finder Quick Action (macOS)
+## Finder (macOS Share menu)
 
-1. Download `HTMLDrop.workflow.zip` from the [latest release](../../releases/latest).
-2. Unzip and double-click `HTMLDrop.workflow` — Automator installs it as a Quick Action.
+1. Download `html-drop-v*.zip` from the [latest release](../../releases/latest) and unzip it.
+2. Drag **`HTMLDrop.app`** to your **Applications** folder.
+3. Open **`HTMLDrop.app`** once — it registers itself and quits immediately.
+4. Right-click any `.html` file in Finder → **Share** → **HTML Drop**.
 
-Right-click any `.html` file in Finder → **Services → Share on HTML Drop**.
+> Gatekeeper warning? Right-click `HTMLDrop.app` → Open, then click Open again.
 
-> Gatekeeper warning? Right-click → Open instead of double-clicking.
-
-See [finder/README.md](finder/README.md) for full details and build-from-source instructions.
+See [finder/README.md](finder/README.md) for build-from-source instructions.
 
 ---
 
