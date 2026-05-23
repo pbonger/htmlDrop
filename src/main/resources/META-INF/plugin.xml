@@ -1,0 +1,25 @@
+<idea-plugin>
+    <id>netlify-share</id>
+    <name>Netlify Share</name>
+    <vendor>Pim</vendor>
+    <description><![CDATA[
+        Right-click any HTML file → <b>Share on Netlify</b>.<br/>
+        Zips and uploads to Netlify Drop, copies the URL to clipboard, shows a balloon notification.
+    ]]></description>
+
+    <depends>com.intellij.modules.platform</depends>
+
+    <extensions defaultExtensionNs="com.intellij">
+        <notificationGroup id="Netlify Share" displayType="BALLOON"/>
+    </extensions>
+
+    <actions>
+        <action id="netlifyshare.ShareOnNetlifyAction"
+                class="netlifyshare.ShareOnNetlifyAction"
+                text="Share on Netlify"
+                description="Zip and upload this HTML file to Netlify Drop, then copy the URL to clipboard">
+            <add-to-group group-id="ProjectViewPopupMenu" anchor="last"/>
+            <add-to-group group-id="EditorPopupMenu" anchor="last"/>
+        </action>
+    </actions>
+</idea-plugin>

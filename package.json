@@ -1,0 +1,9 @@
+{
+  "name": "netlify-share-plugin",
+  "version": "1.0.0",
+  "description": "WebStorm plugin — right-click any HTML file to share on Netlify",
+  "scripts": {
+    "install": "command -v gradle >/dev/null || brew install gradle && gradle wrapper --gradle-version 8.8",
+    "build": "./gradlew buildPlugin"
+  }
+}
