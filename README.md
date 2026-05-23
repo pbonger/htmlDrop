@@ -9,11 +9,11 @@ Available as a **WebStorm plugin** and a **macOS Finder Quick Action**.
 ## Finder (macOS Share menu)
 
 1. Download `html-drop-v*.zip` from the [latest release](../../releases/latest) and unzip it.
-2. Drag **`HTMLDrop.app`** to your **Applications** folder.
-3. Open **`HTMLDrop.app`** once — it registers itself and quits immediately.
+2. Double-click **`HTMLDrop.pkg`** and click through the installer.
+3. If macOS blocks it: click Done to dismiss, then go to **System Settings → Privacy & Security → Open Anyway** next to HTMLDrop.pkg.
 4. Right-click any `.html` file in Finder → **Share** → **HTML Drop**.
 
-> Gatekeeper warning? Right-click `HTMLDrop.app` → Open, then click Open again.
+> The installer handles everything — no Terminal needed.
 
 See [finder/README.md](finder/README.md) for build-from-source instructions.
 

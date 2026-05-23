@@ -17,14 +17,11 @@ Right-click any `.html` file → **Share on HTML Drop**.
 
 ## 2. Finder (macOS Share menu)
 
-1. Drag **`HTMLDrop.app`** from this folder to your **Applications** folder
-2. Open **`HTMLDrop.app`** once — it registers itself and quits immediately
-3. Right-click any `.html` file in Finder → **Share** → **HTML Drop**
-
-> **Doesn't appear in the Share menu?**  
-> Run this once in Terminal:  
-> `pluginkit -a /Applications/HTMLDrop.app/Contents/PlugIns/HTMLDropExtension.appex`  
-> Then log out and back in.
-
-> **Gatekeeper warning?**  
-> Right-click `HTMLDrop.app` → **Open**, then click **Open** again.
+1. Double-click **`HTMLDrop.pkg`**
+2. If macOS blocks it:
+   - Click **Done** to dismiss the warning
+   - Open [System Settings → Privacy & Security](x-apple.systempreferences:com.apple.preference.security) and scroll to the bottom
+   - Click **Open Anyway** next to HTMLDrop.pkg, then enter your password
+   - Double-click **`HTMLDrop.pkg`** again
+3. Click through the installer — it installs the app and sets everything up automatically
+4. Right-click any `.html` file in Finder → **Share** → **HTML Drop**

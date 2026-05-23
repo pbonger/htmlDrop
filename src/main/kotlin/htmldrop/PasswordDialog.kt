@@ -1,13 +1,18 @@
 package htmldrop
 
 import com.intellij.openapi.ui.DialogWrapper
-import java.awt.GridBagConstraints
-import java.awt.GridBagLayout
-import java.awt.Insets
-import javax.swing.*
+import com.intellij.ui.components.JBLabel
+import com.intellij.ui.components.JBPasswordField
+import com.intellij.ui.dsl.builder.AlignX
+import com.intellij.ui.dsl.builder.panel
+import com.intellij.util.ui.JBUI
+import javax.swing.JComponent
 
-class PasswordDialog : DialogWrapper(true) {
-    private val field = JPasswordField(24)
+class PasswordDialog(private val filename: String) : DialogWrapper(true) {
+    private val field = JBPasswordField().apply {
+        emptyText.text = "Leave blank to share without a password"
+        columns = 28
+    }
 
     init {
         title = "Share on HTML Drop"
@@ -15,16 +20,20 @@ class PasswordDialog : DialogWrapper(true) {
         init()
     }
 
-    override fun createCenterPanel(): JComponent {
-        val panel = JPanel(GridBagLayout())
-        val gbc = GridBagConstraints().apply {
-            insets = Insets(4, 0, 4, 0)
-            fill = GridBagConstraints.HORIZONTAL
-            gridwidth = GridBagConstraints.REMAINDER
+    override fun createCenterPanel(): JComponent = panel {
+        row {
+            val label = JBLabel(filename)
+            label.foreground = JBUI.CurrentTheme.ContextHelp.FOREGROUND
+            cell(label)
         }
-        panel.add(JLabel("Password protect this page? (leave empty to skip)"), gbc)
-        panel.add(field, gbc)
-        return panel
+        row("Password:") {
+            cell(field).align(AlignX.FILL)
+        }
+        row {
+            comment("Encrypted with AES-256 in the browser — the server never sees the password.")
+        }
+    }.apply {
+        border = JBUI.Borders.empty(8, 4, 4, 4)
     }
 
     override fun getPreferredFocusedComponent() = field

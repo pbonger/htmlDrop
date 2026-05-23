@@ -1,0 +1,47 @@
+#!/bin/bash
+
+# postinstall runs as root — resolve the actual logged-in user
+CURRENT_USER=$(stat -f "%Su" /dev/console)
+USER_HOME=$(dscl . -read /Users/"$CURRENT_USER" NFSHomeDirectory | awk '{print $2}')
+
+# ── 1. Find the app (should be /Applications but guard against relocation)
+APP_PATH="/Applications/HTMLDrop.app"
+if [ ! -d "$APP_PATH" ]; then
+  APP_PATH=$(sudo -u "$CURRENT_USER" mdfind "kMDItemCFBundleIdentifier == 'com.pbonger.html-drop-app'" 2>/dev/null | head -1)
+fi
+
+# ── 2. Strip quarantine so the unsigned app opens without Gatekeeper blocking
+if [ -n "$APP_PATH" ] && [ -d "$APP_PATH" ]; then
+  xattr -rd com.apple.quarantine "$APP_PATH" 2>/dev/null || true
+
+  # Kill any stale extension process so macOS loads the new version immediately
+  pkill -f HTMLDropExtension 2>/dev/null || true
+
+  # Open once as the real user to register the Share extension
+  sudo -u "$CURRENT_USER" open "$APP_PATH"
+  sleep 2
+  sudo -u "$CURRENT_USER" pluginkit -e use -i com.pbonger.html-drop-app.extension 2>/dev/null || true
+fi
+
+# ── 3. Install WebStorm plugin into every installed WebStorm version
+PLUGIN_ZIP="/tmp/html-drop-install/html-drop-plugin.zip"
+INSTALLED_COUNT=0
+
+while IFS= read -r PLUGINS_DIR; do
+  [ -z "$PLUGINS_DIR" ] && continue
+  [ ! -f "$PLUGIN_ZIP" ] && break
+  mkdir -p "$PLUGINS_DIR"
+  rm -rf "$PLUGINS_DIR/html-drop-plugin"
+  unzip -q -o "$PLUGIN_ZIP" -d "$PLUGINS_DIR/"
+  chown -R "$CURRENT_USER" "$PLUGINS_DIR/html-drop-plugin"
+  INSTALLED_COUNT=$((INSTALLED_COUNT + 1))
+done < <(ls -d "$USER_HOME/Library/Application Support/JetBrains/WebStorm"*/plugins 2>/dev/null || true)
+
+if [ "$INSTALLED_COUNT" -gt 0 ]; then
+  sudo -u "$CURRENT_USER" osascript -e 'display alert "HTML Drop" message "WebStorm plugin installed. Restart WebStorm to activate it." giving up after 10' 2>/dev/null || true
+fi
+
+# ── 4. Clean up
+rm -rf /tmp/html-drop-install
+
+exit 0

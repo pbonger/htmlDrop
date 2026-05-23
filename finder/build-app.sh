@@ -24,20 +24,18 @@ echo "▸ Compiling extension…"
 "$SWIFTC" \
   -sdk "$SDK" -target "$TARGET" \
   -module-name "$EXT_NAME" \
+  -parse-as-library \
   "$DIR/Sources/HTMLDropCore.swift" \
-  "$DIR/Extension/main.swift" \
   "$DIR/Extension/ShareViewController.swift" \
   -framework Foundation -framework AppKit -framework Security -framework CryptoKit \
+  -Xlinker -e -Xlinker _NSExtensionMain \
   -o "$TMP/$EXT_NAME"
 
 echo "▸ Bundling .appex…"
 mkdir -p "$APPEX/Contents/MacOS" "$APPEX/Contents/Resources"
 cp "$TMP/$EXT_NAME" "$APPEX/Contents/MacOS/$EXT_NAME"
 
-# Copy icon + terminal-notifier from workflow bundle if present
-WORKFLOW_RES="$DIR/HTMLDrop.workflow/Contents/Resources"
-[ -f "$WORKFLOW_RES/icon.icns" ]               && cp "$WORKFLOW_RES/icon.icns" "$APPEX/Contents/Resources/AppIcon.icns"
-[ -d "$WORKFLOW_RES/terminal-notifier.app" ]   && cp -r "$WORKFLOW_RES/terminal-notifier.app" "$APPEX/Contents/Resources/"
+[ -f "$DIR/icon.icns" ] && cp "$DIR/icon.icns" "$APPEX/Contents/Resources/AppIcon.icns"
 
 cat > "$APPEX/Contents/Info.plist" << PLIST
 <?xml version="1.0" encoding="UTF-8"?>
@@ -55,8 +53,6 @@ cat > "$APPEX/Contents/Info.plist" << PLIST
     <key>NSExtensionAttributes</key><dict>
       <key>NSExtensionActivationRule</key>
       <string>SUBQUERY(extensionItems,\$i,SUBQUERY(\$i.attachments,\$a,ANY \$a.registeredTypeIdentifiers UTI-CONFORMS-TO "public.html").@count==\$i.attachments.@count).@count>0</string>
-      <key>NSExtensionServiceAllowsFinderPreviewItem</key><true/>
-      <key>NSExtensionServiceRoleType</key><string>NSExtensionServiceRoleTypeEditor</string>
     </dict>
     <key>NSExtensionPointIdentifier</key><string>com.apple.share-services</string>
     <key>NSExtensionPrincipalClass</key><string>ShareViewController</string>
@@ -76,7 +72,7 @@ echo "▸ Compiling host app…"
 echo "▸ Bundling .app…"
 mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"
 cp "$TMP/$APP_NAME" "$APP/Contents/MacOS/$APP_NAME"
-[ -f "$WORKFLOW_RES/icon.icns" ] && cp "$WORKFLOW_RES/icon.icns" "$APP/Contents/Resources/AppIcon.icns"
+[ -f "$DIR/icon.icns" ] && cp "$DIR/icon.icns" "$APP/Contents/Resources/AppIcon.icns"
 
 cat > "$APP/Contents/Info.plist" << PLIST
 <?xml version="1.0" encoding="UTF-8"?>
@@ -96,9 +92,31 @@ cat > "$APP/Contents/Info.plist" << PLIST
 </dict></plist>
 PLIST
 
+# ── Entitlements ─────────────────────────────────────────────────────────────
+EXT_ENT="$TMP/ext.entitlements"
+APP_ENT="$TMP/app.entitlements"
+
+cat > "$EXT_ENT" << 'EOF'
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0"><dict>
+  <key>com.apple.security.app-sandbox</key><true/>
+  <key>com.apple.security.network.client</key><true/>
+  <key>com.apple.security.files.user-selected.read-only</key><true/>
+</dict></plist>
+EOF
+
+cat > "$APP_ENT" << 'EOF'
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0"><dict>
+  <key>com.apple.security.app-sandbox</key><true/>
+</dict></plist>
+EOF
+
 # ── Ad-hoc sign ───────────────────────────────────────────────────────────────
 echo "▸ Signing…"
-codesign --sign - --force --deep "$APPEX"
-codesign --sign - --force --deep "$APP"
+codesign --sign - --force --entitlements "$EXT_ENT" "$APPEX"
+codesign --sign - --force --entitlements "$APP_ENT" "$APP"
 
 echo "✓ Built: $APP"
