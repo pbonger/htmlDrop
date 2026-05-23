@@ -1,82 +1,195 @@
-# HTML Drop — WebStorm Plugin
+# HTML Drop
 
-## Project overview
+Share any `.html` file to [pagedrop.io](https://pagedrop.io) in one click — from WebStorm or the macOS Finder Share menu. No sign-up, no auth token. Optionally encrypt pages with a password before uploading.
 
-A WebStorm plugin that adds **Share on HTML Drop** to the right-click context menu for `.html` files. It uploads the file to [pagedrop.io](https://pagedrop.io) via their JSON API (no auth required), copies the resulting URL to clipboard, and shows a balloon notification. Optionally encrypts the page with a password using AES-256-GCM before uploading.
+---
 
-## Stack
+## What's in the repo
 
-- **Language:** Kotlin
-- **Build:** Gradle with `org.jetbrains.intellij.platform` plugin v2.3.0
-- **Target IDE:** WebStorm 2024.3 (build 243), JVM toolchain 21
-- **Build scripts:** `npm run install` / `npm run build` (npm wraps Gradle)
+| Path | What it is |
+|---|---|
+| `src/main/kotlin/htmldrop/` | WebStorm plugin (Kotlin) |
+| `finder/Sources/` | Swift CLI used by the Finder Quick Action |
+| `finder/Extension/` | macOS Share Extension (shown in Finder's Share button) |
+| `finder/App/` | Minimal host app required to carry the Share Extension |
+| `finder/HTMLDrop.workflow/` | Automator Quick Action — installs to `~/Library/Services/` |
+| `finder/build-app.sh` | Compiles + bundles + signs `HTMLDrop.app` |
+| `finder/pkg-scripts/postinstall` | Runs as root after `.pkg` install |
+| `scripts/generate-dmg-bg.swift` | Draws the DMG window background (pure Swift, no deps) |
+| `scripts/package-dmg.sh` | Builds the `.pkg`, assembles the DMG with background |
+| `build.gradle.kts` | Gradle config for the WebStorm plugin |
+| `package.json` | All build / release commands |
 
-## Build commands
+---
+
+## npm scripts (run everything from project root)
 
 ```bash
-npm install     # installs Gradle + JDK 21 via Homebrew, generates Gradle wrapper
-npm run build   # compiles and packages → build/distributions/html-drop-plugin-1.0.9.zip
+npm run build          # compile WebStorm plugin → build/distributions/html-drop-plugin-*.zip
+npm run build:app      # compile + bundle + sign HTMLDrop.app (Share Extension)
+npm run update:app     # build:app, install to /Applications, re-register extension
+npm run package:dmg    # build .pkg and assemble final DMG
+npm run release        # bump patch version, build everything, push DMG to GitHub Releases
 ```
 
-Install the zip in WebStorm → Settings → Plugins → gear → Install Plugin from Disk.
+### Breakdown of `npm run release`
+1. `npm version patch` — bumps `package.json` and syncs `build.gradle.kts`
+2. `npm run build` — Gradle builds the WebStorm plugin zip
+3. `npm run build:app` — swiftc builds `HTMLDrop.app`
+4. `npm run package:dmg` — calls `scripts/package-dmg.sh`:
+   - Runs `pkgbuild` → `build/HTMLDrop-vX.Y.Z.pkg`
+   - Generates the DMG background with `scripts/generate-dmg-bg.swift`
+   - Assembles the DMG, applies Finder window layout via AppleScript
+   - Converts to compressed read-only UDZO DMG
+5. `gh release create` — uploads `build/HTMLDrop-vX.Y.Z.dmg` to GitHub
 
-## Key files
+---
 
-| File | Purpose |
-|---|---|
-| `build.gradle.kts` | Gradle build — IntelliJ platform 2.x config, JVM 21, instrumentation disabled |
-| `package.json` | npm wrapper with build, release, and finder scripts |
-| `src/main/kotlin/htmldrop/ShareOnHTMLDropAction.kt` | Main action — context menu handler, upload, encryption |
-| `src/main/kotlin/htmldrop/PasswordDialog.kt` | Dialog with `JPasswordField` shown before each upload |
-| `src/main/resources/META-INF/plugin.xml` | Plugin descriptor — id, vendor, action registration |
-| `src/main/resources/META-INF/pluginIcon.png` | Plugin icon shown in WebStorm plugin settings (40×40) |
-| `src/main/resources/icons/icon16.png` | Action icon shown in context menu (16×16) |
+## Upload API — pagedrop.io
 
-## Finder Quick Action (`finder/`)
+**Endpoint:** `POST https://pagedrop.io/api/upload`  
+**Auth:** none  
+**Body:** `application/json` — `{"html": "<escaped html>", "ttl": "3d"}`  
+**Response:** JSON with a `url` (or `link` / `page_url`) field  
 
-A companion macOS Automator workflow that adds **Share on HTML Drop** to Finder's right-click Quick Actions for `.html` files.
+Both the Swift and Kotlin sides share the same retry logic: on HTTP 429, wait 5 s → 15 s → 45 s then fail.
 
-| File | Purpose |
-|---|---|
-| `finder/Sources/HTMLDropCore.swift` | Upload, encryption, clipboard, helpers |
-| `finder/Sources/main.swift` | CLI entry point — dialogs, notification, calls core |
-| `finder/Extension/ShareViewController.swift` | Share extension variant (used by the `.app`) |
-| `finder/Package.swift` | Swift package — builds `html-drop` binary |
-| `finder/HTMLDrop.workflow/` | Automator workflow bundle installed to `~/Library/Services/` |
-| `finder/HTMLDrop.app/` | Pre-built macOS share extension app |
-| `finder/install.sh` | Builds + installs the workflow and binary |
-| `finder/build-app.sh` | Builds the `.app` share extension |
+---
 
-```bash
-npm run build:finder    # compiles Swift binary and copies into workflow bundle
-npm run package:finder  # zips to build/distributions/HTMLDrop.workflow.zip
-npm run install:finder  # builds and installs to ~/Library/Services/
-```
+## Encryption (password-protected pages)
 
-## How the plugin works
+Both the plugin and the Swift CLI use identical crypto:
+
+- **Key derivation:** PBKDF2-HMAC-SHA256, 100 000 iterations, 256-bit key, random 16-byte salt
+- **Encryption:** AES-256-GCM, random 12-byte IV (nonce)
+- **Output:** Self-contained HTML page — ciphertext embedded as base64, decrypted in-browser via the [Web Crypto API](https://developer.mozilla.org/en-US/docs/Web/API/SubtleCrypto)
+- The unlock page (`wrapperHtml`) is defined in both `HTMLDropCore.swift` and `ShareOnHTMLDropAction.kt` and must stay in sync
+
+---
+
+## WebStorm plugin
+
+**Language:** Kotlin · **Build:** Gradle + `org.jetbrains.intellij.platform` v2.x · **JVM:** 21 · **Target:** WebStorm 2024.3 (build 243)
 
 ### Action flow
 1. User right-clicks an `.html` file → **Share on HTML Drop**
-2. `PasswordDialog` appears — enter a password or leave empty and click Share
-3. Background task (`Task.Backgroundable`) starts:
-   - If password given: encrypts HTML with AES-256-GCM, wraps in a self-contained password-prompt HTML page
-   - POSTs `{"html": "..."}` to `https://pagedrop.io/api/upload` (no auth required)
-   - Parses URL from JSON response
-   - Copies URL to clipboard, shows balloon notification with "Open in Browser" action
+2. `PasswordDialog` appears — enter a password or leave empty → Share
+3. Background `Task.Backgroundable`:
+   - Encrypts (if password given) or passes HTML through as-is
+   - POSTs to pagedrop.io
+   - Copies URL to clipboard
+   - Shows balloon notification with **Open in Browser** action
 
-### Upload (`ShareOnHTMLDropAction.upload`)
-- `POST https://pagedrop.io/api/upload`
-- `Content-Type: application/json`, body: `{"html": "<escaped html content>"}`
-- Response: JSON with a `url` field containing the public page URL
-- No authentication, no ZIP, instant deploy
+### Key files
+| File | Purpose |
+|---|---|
+| `ShareOnHTMLDropAction.kt` | Context menu action, upload, encrypt, notify |
+| `PasswordDialog.kt` | Password prompt (`JPasswordField`) |
+| `plugin.xml` | Plugin descriptor — id `com.pbonger.html-drop`, action registration |
+| `pluginIcon.png` / `pluginIcon@2x.png` | Plugin icon in WebStorm settings (40 × 40) |
+| `icons/icon16.png` / `icon16_dark.png` | Context menu icon (16 × 16, light + dark variants) |
 
-### Encryption (`ShareOnHTMLDropAction.encrypt`)
-- Key derivation: PBKDF2WithHmacSHA256, 100k iterations, 256-bit key
-- Encryption: AES/GCM/NoPadding with random 16-byte salt and 12-byte IV
-- Output: self-contained HTML wrapper with encrypted content as base64, decrypted client-side using the Web Crypto API
+### Known build quirks
+- `instrumentCode` and `buildSearchableOptions` are **disabled** — `java-compiler-ant-tasks` for build 243 is not in JetBrains repos
+- `compileOnly(kotlin("stdlib"))` prevents stdlib conflicts with the IntelliJ platform
+- Gradle wrapper targets 8.8; system Gradle is only used once to generate the wrapper
 
-## Known build quirks
+---
 
-- `instrumentCode` and `buildSearchableOptions` are disabled in `build.gradle.kts` — `java-compiler-ant-tasks` for WebStorm build 243 is not available in JetBrains repos
-- `compileOnly(kotlin("stdlib"))` prevents stdlib version conflicts with the IntelliJ Platform
-- The Gradle wrapper targets Gradle 8.8; system Gradle (9.x) is only used to generate the wrapper via `npm install`
+## macOS Share Extension (`HTMLDrop.app`)
+
+**Built with:** `swiftc` directly (no Xcode project) via `finder/build-app.sh`  
+**Signed with:** ad-hoc (`codesign --sign -`), **not** notarised  
+**Bundle IDs:** `com.pbonger.html-drop-app` (host) / `com.pbonger.html-drop-app.extension` (appex)  
+**Min macOS:** 12.0
+
+### Architecture
+```
+HTMLDrop.app/
+  Contents/
+    MacOS/HTMLDrop          ← stub host app (App/main.swift) — quits immediately
+    PlugIns/
+      HTMLDropExtension.appex/
+        Contents/
+          MacOS/HTMLDropExtension   ← extension binary
+          Resources/AppIcon.icns
+```
+
+The extension binary is linked with `-Xlinker -e -Xlinker _NSExtensionMain` and compiled with `-parse-as-library` — no `main.swift` needed in the Extension folder.
+
+### Extension entitlements (sandboxed)
+- `com.apple.security.app-sandbox` ✓
+- `com.apple.security.network.client` ✓ (upload to pagedrop.io)
+- `com.apple.security.files.user-selected.read-only` ✓ (read the .html file)
+
+### `ShareViewController.swift` flow
+1. `beginRequest(with:)` — detects `public.html` vs `public.file-url` attachment
+2. `loadViaFileRepresentation` (preferred) — creates a sandboxed temp copy the extension can read; resolves the display filename from `public.file-url`
+3. `showShareDialog` — NSAlert with Share / Add Password… / Cancel
+4. `showPasswordDialog` — NSAlert + NSSecureTextField
+5. `upload(html:password:context:)` — encrypt if needed → `htmlDropUpload()` → copy URL → `showSuccess`
+6. `showSuccess` — NSAlert with **Open in Browser** / OK
+
+### Updating the app after code changes
+```bash
+npm run update:app
+# equivalent to:
+npm run build:app
+sudo rm -rf /Applications/HTMLDrop.app
+sudo cp -r finder/HTMLDrop.app /Applications/
+sudo xattr -cr /Applications/HTMLDrop.app      # strip quarantine
+pkill -f HTMLDropExtension 2>/dev/null || true
+open /Applications/HTMLDrop.app
+sleep 2
+pluginkit -e use -i com.pbonger.html-drop-app.extension
+```
+
+---
+
+## `.pkg` installer
+
+`pkgbuild` bundles:
+- `HTMLDrop.app` → `/Applications/`
+- `html-drop-plugin.zip` → `/tmp/html-drop-install/` (picked up by `postinstall`)
+
+`postinstall` (runs as root):
+1. Strips quarantine from `HTMLDrop.app`
+2. Kills any stale extension process, opens the app as the real user, calls `pluginkit -e use`
+3. Finds all installed WebStorm versions via `~/Library/Application Support/JetBrains/WebStorm*/plugins` and unzips the plugin into each
+4. Shows an osascript alert if the plugin was installed
+
+---
+
+## DMG layout
+
+Window: 560 × 300 px, dark background generated by `scripts/generate-dmg-bg.swift`  
+Contents: `HTML Drop.pkg` icon at position (415, 148)
+
+Background image shows 5 install steps:
+1. Double-click `HTML Drop.pkg`
+2. Click **OK** on the warning dialog
+3. Open **System Settings → Privacy & Security**
+4. Scroll down, click **Open Anyway**
+5. Follow the installer steps
+
+> **Why the extra steps?** The `.app` and `.pkg` are ad-hoc signed only, not notarised. macOS Gatekeeper quarantines them. The `postinstall` script strips quarantine from the installed `.app`, but the `.pkg` itself still needs the user to approve it in System Settings once. There is no "right-click → Open Anyway" for `.pkg` files on macOS Ventura+.
+
+---
+
+## Security
+
+- No credentials anywhere in this repo — pagedrop.io requires no auth
+- There are no `Credentials.swift` or `Credentials.kt` files (those were Netlify-era, now gone)
+- Passwords entered by the user are never transmitted — only the encrypted ciphertext is uploaded
+
+---
+
+## Gitignore (key entries)
+
+```
+finder/.build/          # Swift SPM build artefacts
+finder/.build-app/      # swiftc intermediate objects
+finder/HTMLDrop.app/    # built app (generated)
+finder/icon.icns        # generated from icon_transparent.png
+build/                  # Gradle + pkg + DMG output
+```
