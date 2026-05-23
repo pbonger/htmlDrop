@@ -1,1 +1,1 @@
-rootProject.name = "netlify-share-plugin"
+rootProject.name = "html-drop-plugin"

@@ -2,9 +2,9 @@
 import PackageDescription
 
 let package = Package(
-    name: "netlify-share",
+    name: "html-drop",
     platforms: [.macOS(.v12)],
     targets: [
-        .executableTarget(name: "netlify-share", path: "Sources")
+        .executableTarget(name: "html-drop", path: "Sources")
     ]
 )

@@ -1,4 +1,4 @@
-package netlifyshare
+package htmldrop
 
 import com.intellij.openapi.ui.DialogWrapper
 import java.awt.GridBagConstraints
@@ -10,7 +10,7 @@ class PasswordDialog : DialogWrapper(true) {
     private val field = JPasswordField(24)
 
     init {
-        title = "Share on Netlify"
+        title = "Share on HTML Drop"
         setOKButtonText("Share")
         init()
     }

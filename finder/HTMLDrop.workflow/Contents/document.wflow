@@ -39,7 +39,7 @@
                 <key>ActionParameters</key>
                 <dict>
                     <key>COMMAND_STRING</key>
-                    <string>for f in "$@"; do "$HOME/Library/Services/NetlifyShare.workflow/Contents/MacOS/netlify-share" "$f"; done</string>
+                    <string>for f in "$@"; do "$HOME/Library/Services/HTMLDrop.workflow/Contents/MacOS/html-drop" "$f"; done</string>
                     <key>inputMethod</key><integer>1</integer>
                     <key>shell</key><string>/bin/bash</string>
                     <key>source</key><string></string>

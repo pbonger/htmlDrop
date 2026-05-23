@@ -7,10 +7,10 @@ SWIFTC="$(xcrun -f swiftc)"
 ARCH="$(uname -m)"
 TARGET="${ARCH}-apple-macos12.0"
 
-APP_NAME="NetlifyShare"
-EXT_NAME="NetlifyShareExtension"
-BUNDLE_ID_APP="com.pbonger.netlify-share-app"
-BUNDLE_ID_EXT="com.pbonger.netlify-share-app.extension"
+APP_NAME="HTMLDrop"
+EXT_NAME="HTMLDropExtension"
+BUNDLE_ID_APP="com.pbonger.html-drop-app"
+BUNDLE_ID_EXT="com.pbonger.html-drop-app.extension"
 
 TMP="$DIR/.build-app"
 APP="$DIR/${APP_NAME}.app"
@@ -24,8 +24,7 @@ echo "▸ Compiling extension…"
 "$SWIFTC" \
   -sdk "$SDK" -target "$TARGET" \
   -module-name "$EXT_NAME" \
-  "$DIR/Sources/NetlifyCore.swift" \
-  "$DIR/Sources/Credentials.swift" \
+  "$DIR/Sources/HTMLDropCore.swift" \
   "$DIR/Extension/main.swift" \
   "$DIR/Extension/ShareViewController.swift" \
   -framework Foundation -framework AppKit -framework Security -framework CryptoKit \
@@ -36,7 +35,7 @@ mkdir -p "$APPEX/Contents/MacOS" "$APPEX/Contents/Resources"
 cp "$TMP/$EXT_NAME" "$APPEX/Contents/MacOS/$EXT_NAME"
 
 # Copy icon + terminal-notifier from workflow bundle if present
-WORKFLOW_RES="$DIR/NetlifyShare.workflow/Contents/Resources"
+WORKFLOW_RES="$DIR/HTMLDrop.workflow/Contents/Resources"
 [ -f "$WORKFLOW_RES/icon.icns" ]               && cp "$WORKFLOW_RES/icon.icns" "$APPEX/Contents/Resources/AppIcon.icns"
 [ -d "$WORKFLOW_RES/terminal-notifier.app" ]   && cp -r "$WORKFLOW_RES/terminal-notifier.app" "$APPEX/Contents/Resources/"
 
@@ -44,10 +43,10 @@ cat > "$APPEX/Contents/Info.plist" << PLIST
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0"><dict>
-  <key>CFBundleDisplayName</key><string>NetlifyShare</string>
+  <key>CFBundleDisplayName</key><string>HTMLDrop</string>
   <key>CFBundleExecutable</key><string>${EXT_NAME}</string>
   <key>CFBundleIdentifier</key><string>${BUNDLE_ID_EXT}</string>
-  <key>CFBundleName</key><string>NetlifyShare</string>
+  <key>CFBundleName</key><string>HTMLDrop</string>
   <key>CFBundleIconFile</key><string>AppIcon</string>
   <key>CFBundlePackageType</key><string>XPC!</string>
   <key>CFBundleShortVersionString</key><string>1.0</string>
@@ -85,7 +84,7 @@ cat > "$APP/Contents/Info.plist" << PLIST
 <plist version="1.0"><dict>
   <key>CFBundleExecutable</key><string>${APP_NAME}</string>
   <key>CFBundleIdentifier</key><string>${BUNDLE_ID_APP}</string>
-  <key>CFBundleName</key><string>NetlifyShare</string>
+  <key>CFBundleName</key><string>HTMLDrop</string>
   <key>CFBundleIconFile</key><string>AppIcon</string>
   <key>CFBundlePackageType</key><string>APPL</string>
   <key>CFBundleShortVersionString</key><string>1.0</string>

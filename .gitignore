@@ -3,10 +3,9 @@ build/
 *.iml
 .idea/
 .intellijPlatform/
-src/main/kotlin/netlifyshare/Credentials.kt
 finder/Sources/Credentials.swift
 finder/.build/
 finder/.build-app/
-finder/NetlifyShare.app/
-finder/NetlifyShare.workflow/Contents/MacOS/netlify-share
-finder/NetlifyShare.workflow/Contents/Resources/
+finder/HTMLDrop.app/
+finder/HTMLDrop.workflow/Contents/MacOS/html-drop
+finder/HTMLDrop.workflow/Contents/Resources/

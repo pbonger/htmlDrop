@@ -53,7 +53,7 @@ func confirmShare() -> String? {
     let iconClause = workflowIconPath().map { "with icon (POSIX file \"\($0.esc)\")" } ?? "with icon note"
 
     let (status, output) = osascript(
-        "display dialog \"Share this page on Netlify?\" " +
+        "display dialog \"Share this page on HTML Drop?\" " +
         "buttons {\"Cancel\", \"Add password\u{2026}\", \"Share\"} default button \"Share\" \(iconClause)"
     )
     guard status == 0 else { return nil }
@@ -71,31 +71,28 @@ func confirmShare() -> String? {
 // MARK: - Entry point
 
 let args = CommandLine.arguments
-guard args.count > 1 else { fputs("Usage: netlify-share <file.html>\n", stderr); exit(1) }
+guard args.count > 1 else { fputs("Usage: html-drop <file.html>\n", stderr); exit(1) }
 
 let filePath = args[1]
 guard filePath.lowercased().hasSuffix(".html") else {
-    notify("Netlify Share", "Only HTML files are supported")
+    notify("HTML Drop", "Only HTML files are supported")
     exit(0)
 }
 
 guard let password = confirmShare() else { exit(0) }
 
 do {
-    notify("Netlify Share", password.isEmpty ? "Uploading…" : "Encrypting and uploading…")
-    let html  = try String(contentsOfFile: filePath, encoding: .utf8)
-    let token: String
-    if let t = tokenGet() { token = t } else { token = try login() }
-    let content = password.isEmpty ? wrapHtml(html) : (try encryptHtml(html, password: password))
-    let zipURL  = try makeZip(content)
-    let url     = try netlifyUpload(zipURL: zipURL, token: token)
+    notify("HTML Drop", password.isEmpty ? "Uploading…" : "Encrypting and uploading…")
+    let html    = try String(contentsOfFile: filePath, encoding: .utf8)
+    let content = password.isEmpty ? html : (try encryptHtml(html, password: password))
+    let url     = try htmlDropUpload(content)
     copyToClipboard(url)
-    notify("Shared on Netlify",
+    notify("Shared on HTML Drop",
            password.isEmpty ? "URL copied to clipboard" : "URL copied to clipboard (password protected)",
            openUrl: url)
     print(url)
 } catch {
-    notify("Netlify Share Failed", error.localizedDescription)
+    notify("HTML Drop Failed", error.localizedDescription)
     fputs("Error: \(error)\n", stderr)
     exit(1)
 }

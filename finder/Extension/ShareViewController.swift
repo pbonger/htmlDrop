@@ -33,7 +33,7 @@ class ShareViewController: NSViewController {
 
     private func showShareDialog(for url: URL, context: NSExtensionContext) {
         let alert = NSAlert()
-        alert.messageText = "Share on Netlify"
+        alert.messageText = "Share on HTML Drop"
         alert.informativeText = url.lastPathComponent
         alert.icon = bundleIcon()
         alert.addButton(withTitle: "Share")
@@ -71,17 +71,15 @@ class ShareViewController: NSViewController {
         DispatchQueue.global().async {
             do {
                 let html    = try String(contentsOf: url, encoding: .utf8)
-                let token   = try tokenGet() ?? login()
-                let content = password.isEmpty ? wrapHtml(html) : (try encryptHtml(html, password: password))
-                let zipURL  = try makeZip(content)
-                let siteUrl = try netlifyUpload(zipURL: zipURL, token: token)
+                let content = password.isEmpty ? html : (try encryptHtml(html, password: password))
+                let siteUrl = try htmlDropUpload(content)
                 copyToClipboard(siteUrl)
-                self.notify("Shared on Netlify",
+                self.notify("Shared on HTML Drop",
                             password.isEmpty ? "URL copied to clipboard" : "URL copied (password protected)",
                             openUrl: siteUrl)
                 context.completeRequest(returningItems: nil, completionHandler: nil)
             } catch {
-                self.notify("Netlify Share Failed", error.localizedDescription)
+                self.notify("HTML Drop Failed", error.localizedDescription)
                 context.cancelRequest(withError: error)
             }
         }

@@ -1,17 +1,17 @@
-# Netlify Share
+# HTML Drop
 
-Right-click any `.html` file → **Share on Netlify**.  
-Zips the file, uploads to Netlify, copies the URL to clipboard, and shows a notification.  
+Right-click any `.html` file → **Share on HTML Drop**.  
+Uploads to [pagedrop.io](https://pagedrop.io), copies the URL to clipboard, and shows a notification.  
 Optionally password-protects the page with client-side AES-256 encryption.
 
-Available as a **WebStorm plugin** and a **macOS Finder Quick Action**. Both share the same Netlify login — authenticate once, works in both.
+Available as a **WebStorm plugin** and a **macOS Finder Quick Action**.
 
 ## Finder Quick Action (macOS)
 
-1. Download `NetlifyShare.workflow.zip` from the [latest release](../../releases/latest).
-2. Unzip and double-click `NetlifyShare.workflow` — Automator installs it as a Quick Action.
+1. Download `HTMLDrop.workflow.zip` from the [latest release](../../releases/latest).
+2. Unzip and double-click `HTMLDrop.workflow` — Automator installs it as a Quick Action.
 
-Right-click any `.html` file in Finder → **Services → NetlifyShare**. On first use a browser opens for Netlify login; after that the token is in the keychain.
+Right-click any `.html` file in Finder → **Services → Share on HTML Drop**.
 
 > Gatekeeper warning? Right-click → Open instead of double-clicking.
 
@@ -27,23 +27,9 @@ Requires Node.js and Homebrew. Java 21+ is required — `npm install` handles it
 
 ```bash
 git clone <this repo>
-cd netlify-share-plugin
+cd html-drop-plugin
 npm install   # installs Gradle + JDK if missing, generates the Gradle wrapper
 ```
-
-### Credentials
-
-The Netlify OAuth credentials are not in the repo. Create `src/main/kotlin/netlifyshare/Credentials.kt` (gitignored):
-
-```kotlin
-package netlifyshare
-
-internal const val NETLIFY_CLIENT_ID     = "your_client_id"
-internal const val NETLIFY_CLIENT_SECRET = "your_client_secret"
-```
-
-Get these from **app.netlify.com → User Settings → Applications → OAuth Apps → New OAuth app**.  
-Set the redirect URL to `http://localhost`.
 
 ### Build
 
@@ -51,7 +37,7 @@ Set the redirect URL to `http://localhost`.
 npm run build
 ```
 
-Output: `build/distributions/netlify-share-plugin-1.0.0.zip`
+Output: `build/distributions/html-drop-plugin-1.0.9.zip`
 
 ### Install in WebStorm
 
@@ -60,7 +46,7 @@ Output: `build/distributions/netlify-share-plugin-1.0.0.zip`
 3. Select the `.zip` from `build/distributions/`
 4. Restart WebStorm
 
-Right-click any `.html` file → **Share on Netlify**. On first use, a browser window opens for Netlify login — after that the token is stored in the system keychain and login is never asked again.
+Right-click any `.html` file → **Share on HTML Drop**.
 
 ### Update
 
