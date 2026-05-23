@@ -35,19 +35,15 @@ fi
 # ── Build .pkg ────────────────────────────────────────────────────────────────
 echo "→ Building pkg payload..."
 
-# App goes to /Applications
 mkdir -p "$PKG_ROOT/Applications"
 cp -r "finder/HTMLDrop.app" "$PKG_ROOT/Applications/"
 
-# Plugin zip is staged to /tmp/html-drop-install/ so postinstall can find it
 mkdir -p "$PKG_ROOT/tmp/html-drop-install"
 cp "$PLUGIN_ZIP" "$PKG_ROOT/tmp/html-drop-install/html-drop-plugin.zip"
 
 echo "→ Running pkgbuild..."
 mkdir -p build
 
-# Generate component plist and disable relocation so macOS always installs
-# to /Applications even if an old copy exists somewhere else (e.g. Downloads)
 COMPONENT_PLIST="/tmp/html-drop-component-$$.plist"
 pkgbuild --analyze --root "$PKG_ROOT" "$COMPONENT_PLIST"
 /usr/libexec/PlistBuddy -c "Set :0:BundleIsRelocatable false" "$COMPONENT_PLIST"
@@ -62,32 +58,17 @@ pkgbuild \
   "$PKG_PATH"
 
 rm -f "$COMPONENT_PLIST"
-
 rm -rf "$PKG_ROOT"
 
-# ── Build DMG ─────────────────────────────────────────────────────────────────
-echo "→ Staging DMG contents..."
-mkdir -p "$STAGING"
-cp "$PKG_PATH" "$STAGING/HTML Drop.pkg"
+# ── Generate DMG background image ────────────────────────────────────────────
+echo "→ Generating background image..."
+BG_DIR="$STAGING/.background"
+mkdir -p "$BG_DIR"
+swift scripts/generate-dmg-bg.swift "$BG_DIR/bg.png"
 
-cat > "$STAGING/README.rtf" <<'RTFEOF'
-{\rtf1\ansi\deff0
-{\fonttbl{\f0\fswiss\fcharset0 Helvetica;}{\f1\fswiss\fcharset0 Helvetica-Bold;}}
-{\f1\fs28 How to install}\line
-\line
-{\f0\fs24 1. {\b Right-click} "HTML Drop.pkg" and choose {\b Open}.}\line
-\line
-{\f0\fs24 2. macOS will warn about an unidentified developer.}\line
-{\f0\fs24    Click {\b Open} to continue.}\line
-\line
-{\f0\fs24 3. Follow the installer. It will:}\line
-{\f0\fs24    舦  Copy HTMLDrop to /Applications}\line
-{\f0\fs24    舦  Register the Finder Share extension}\line
-{\f0\fs24    舦  Install the WebStorm plugin (if WebStorm is found)}\line
-\line
-{\f0\fs20 Note: double-clicking won't work due to Gatekeeper 舒  right-click 薔  Open is required.}
-}
-RTFEOF
+# ── Stage DMG contents ────────────────────────────────────────────────────────
+echo "→ Staging DMG contents..."
+cp "$PKG_PATH" "$STAGING/HTML Drop.pkg"
 
 echo "→ Creating writable disk image..."
 hdiutil create \
@@ -113,12 +94,12 @@ tell application "Finder"
     set current view of container window to icon view
     set toolbar visible of container window to false
     set statusbar visible of container window to false
-    set the bounds of container window to {200, 150, 720, 400}
+    set the bounds of container window to {300, 160, 860, 460}
     set theViewOptions to icon view options of container window
     set arrangement of theViewOptions to not arranged
     set icon size of theViewOptions to 80
-    set position of item "HTML Drop.pkg" of container window to {130, 130}
-    set position of item "README.rtf" of container window to {370, 130}
+    set background picture of theViewOptions to file ".background:bg.png"
+    set position of item "HTML Drop.pkg" of container window to {415, 148}
     close
     open
     update without registering applications
