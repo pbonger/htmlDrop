@@ -1,10 +1,17 @@
 {
   "name": "netlify-share-plugin",
-  "version": "1.0.0",
+  "version": "1.0.9",
   "description": "WebStorm plugin — right-click any HTML file to share on Netlify",
   "scripts": {
-    "install": "brew install openjdk@21 gradle || true && gradle wrapper --gradle-version 8.8",
+    "install": "brew install openjdk@21 gradle gh terminal-notifier || true && gh auth login && gradle wrapper --gradle-version 8.8 && npm run install:finder",
     "build": "JAVA_HOME=$(brew --prefix openjdk@21)/libexec/openjdk.jdk/Contents/Home ./gradlew buildPlugin",
-    "release": "npm version patch --no-git-tag-version && VERSION=$(node -p \"require('./package.json').version\") && sed -i '' \"s/version = \\\"[^\\\"]*\\\"/version = \\\"$VERSION\\\"/\" build.gradle.kts && npm run build && gh release create v$VERSION build/distributions/*.zip --title \"Netlify Share v$VERSION\" --generate-notes"
+    "icon:finder": "mkdir -p finder/NetlifyShare.workflow/Contents/Resources && mkdir -p /tmp/netlify-share.iconset && sips -z 16 16 src/main/resources/icons/icon.png --out /tmp/netlify-share.iconset/icon_16x16.png && sips -z 32 32 src/main/resources/icons/icon.png --out /tmp/netlify-share.iconset/icon_16x16@2x.png && sips -z 32 32 src/main/resources/icons/icon.png --out /tmp/netlify-share.iconset/icon_32x32.png && sips -z 64 64 src/main/resources/icons/icon.png --out /tmp/netlify-share.iconset/icon_32x32@2x.png && sips -z 128 128 src/main/resources/icons/icon.png --out /tmp/netlify-share.iconset/icon_128x128.png && sips -z 256 256 src/main/resources/icons/icon.png --out /tmp/netlify-share.iconset/icon_128x128@2x.png && sips -z 256 256 src/main/resources/icons/icon.png --out /tmp/netlify-share.iconset/icon_256x256.png && sips -z 512 512 src/main/resources/icons/icon.png --out /tmp/netlify-share.iconset/icon_256x256@2x.png && sips -z 512 512 src/main/resources/icons/icon.png --out /tmp/netlify-share.iconset/icon_512x512.png && sips -z 1024 1024 src/main/resources/icons/icon.png --out /tmp/netlify-share.iconset/icon_512x512@2x.png && iconutil -c icns /tmp/netlify-share.iconset -o finder/NetlifyShare.workflow/Contents/Resources/icon.icns && rm -rf /tmp/netlify-share.iconset",
+    "build:finder": "npm run icon:finder && cp -r $(brew --prefix terminal-notifier)/terminal-notifier.app finder/NetlifyShare.workflow/Contents/Resources/terminal-notifier.app && cd finder && swift build -c release && cp .build/release/netlify-share NetlifyShare.workflow/Contents/MacOS/netlify-share",
+    "package:finder": "mkdir -p build/distributions && cd finder && zip -r ../build/distributions/NetlifyShare.workflow.zip NetlifyShare.workflow --exclude '*/.gitkeep' --exclude '*/.DS_Store'",
+    "build:app": "npm run icon:finder && cd finder && ./build-app.sh",
+    "install:app": "cp -r finder/NetlifyShare.app /Applications/ && open /Applications/NetlifyShare.app",
+    "install:finder": "cd finder && ./install.sh",
+    "package:all": "VERSION=$(node -p \"require('./package.json').version\") && mkdir -p build/release && cp build/distributions/netlify-share-plugin-*.zip build/release/ && cp -r finder/NetlifyShare.workflow build/release/ && cp INSTALL.md build/release/README.md && (cd build/release && zip -r ../netlify-share-v$VERSION.zip . --exclude '*/.DS_Store') && rm -rf build/release",
+    "release": "npm version patch --no-git-tag-version && VERSION=$(node -p \"require('./package.json').version\") && sed -i '' \"s/version = \\\"[^\\\"]*\\\"/version = \\\"$VERSION\\\"/\" build.gradle.kts && rm -rf build/distributions && npm run build && npm run build:finder && npm run package:finder && npm run package:all && gh release create v$VERSION build/netlify-share-v$VERSION.zip --title \"Netlify Share v$VERSION\" --generate-notes"
   }
 }

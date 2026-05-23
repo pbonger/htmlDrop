@@ -1,7 +1,6 @@
 package netlifyshare
 
 import com.intellij.credentialStore.CredentialAttributes
-import com.intellij.credentialStore.generateServiceName
 import com.intellij.ide.BrowserUtil
 import com.intellij.ide.passwordSafe.PasswordSafe
 import java.io.BufferedReader
@@ -20,7 +19,8 @@ object NetlifyAuthManager {
     private val CLIENT_ID     = NETLIFY_CLIENT_ID
     private val CLIENT_SECRET = NETLIFY_CLIENT_SECRET
 
-    private fun credAttrs() = CredentialAttributes(generateServiceName("NetlifyShare", "access_token"))
+    // Shared service name — identical in finder/Sources/main.swift so both apps share one token
+    private fun credAttrs() = CredentialAttributes("com.pbonger.netlify-share", "access_token")
 
     fun getToken(): String? = PasswordSafe.instance.getPassword(credAttrs())
     fun clearToken()        = PasswordSafe.instance.setPassword(credAttrs(), null)
