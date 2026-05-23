@@ -3,7 +3,8 @@
   "version": "1.0.0",
   "description": "WebStorm plugin — right-click any HTML file to share on Netlify",
   "scripts": {
-    "install": "command -v gradle >/dev/null || brew install gradle && gradle wrapper --gradle-version 8.8",
-    "build": "./gradlew buildPlugin"
+    "install": "brew install openjdk@21 gradle || true && gradle wrapper --gradle-version 8.8",
+    "build": "JAVA_HOME=$(brew --prefix openjdk@21)/libexec/openjdk.jdk/Contents/Home ./gradlew buildPlugin",
+    "release": "npm version patch --no-git-tag-version && VERSION=$(node -p \"require('./package.json').version\") && sed -i '' \"s/version = \\\"[^\\\"]*\\\"/version = \\\"$VERSION\\\"/\" build.gradle.kts && npm run build && gh release create v$VERSION build/distributions/*.zip --title \"Netlify Share v$VERSION\" --generate-notes"
   }
 }

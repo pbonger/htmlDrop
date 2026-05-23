@@ -1,6 +1,6 @@
 plugins {
-    id("org.jetbrains.intellij") version "1.17.4"
-    kotlin("jvm") version "1.9.25"
+    id("org.jetbrains.intellij.platform") version "2.3.0"
+    kotlin("jvm") version "2.0.0"
 }
 
 group = "pim"
@@ -8,25 +8,23 @@ version = "1.0.0"
 
 repositories {
     mavenCentral()
+    intellijPlatform {
+        defaultRepositories()
+    }
+}
+
+dependencies {
+    compileOnly(kotlin("stdlib"))
+    intellijPlatform {
+        webstorm("2024.3")
+    }
 }
 
 kotlin {
-    jvmToolchain(17)
+    jvmToolchain(21)
 }
 
-intellij {
-    version.set("2024.3")
-    type.set("WS")       // WebStorm
-    plugins.set(emptyList())
-    downloadSources.set(false)
-}
-
-tasks {
-    patchPluginXml {
-        sinceBuild.set("243")
-        untilBuild.set("251.*")
-    }
-    buildSearchableOptions {
-        enabled = false  // speeds up build; no settings to index
-    }
+intellijPlatform {
+    instrumentCode = false
+    buildSearchableOptions = false
 }

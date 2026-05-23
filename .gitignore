@@ -2,3 +2,5 @@
 build/
 *.iml
 .idea/
+.intellijPlatform/
+src/main/kotlin/netlifyshare/Credentials.kt
