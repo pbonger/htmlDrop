@@ -45,7 +45,7 @@ npm run release        # bump patch version, build everything, push DMG to GitHu
 | `icons/icon16.png` | manual — do not overwrite | WebStorm context menu icon (light theme) |
 | `icons/icon16_dark.png` | `icon16.png` negated | WebStorm context menu icon (dark theme, white logo) |
 
-All source images live in `src/main/resources/icons/`. Run `npm run icon` to regenerate everything.
+Run `npm run icon` to regenerate all icons from source.
 
 ### Breakdown of `npm run release`
 1. `npm version patch` — bumps `package.json` and syncs `build.gradle.kts`
