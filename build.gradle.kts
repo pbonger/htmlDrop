@@ -4,7 +4,7 @@ plugins {
 }
 
 group = "pim"
-version = "1.0.30"
+version = "1.0.32"
 
 repositories {
     mavenCentral()
