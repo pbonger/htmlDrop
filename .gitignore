@@ -9,3 +9,9 @@ finder/.build-app/
 finder/HTMLDrop.app/
 finder/HTMLDrop.workflow/Contents/MacOS/html-drop
 finder/HTMLDrop.workflow/Contents/Resources/
+finder/icon.icns
+
+# Generated icons (npm run icon)
+src/main/resources/META-INF/pluginIcon.png
+src/main/resources/META-INF/pluginIcon@2x.png
+src/main/resources/icons/icon16_dark.png
