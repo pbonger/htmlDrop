@@ -54,8 +54,8 @@ cat > "$APPEX/Contents/Info.plist" << PLIST
   <key>CFBundleName</key><string>HTMLDrop</string>
   <key>CFBundleIconFile</key><string>AppIcon</string>
   <key>CFBundlePackageType</key><string>XPC!</string>
-  <key>CFBundleShortVersionString</key><string>1.0</string>
-  <key>CFBundleVersion</key><string>1</string>
+  <key>CFBundleShortVersionString</key><string>$(node -p "require('$DIR/../package.json').version" 2>/dev/null || echo "1.0")</string>
+  <key>CFBundleVersion</key><string>$(node -p "require('$DIR/../package.json').version" 2>/dev/null || echo "1")</string>
   <key>NSExtension</key><dict>
     <key>NSExtensionAttributes</key><dict>
       <key>NSExtensionActivationRule</key>
