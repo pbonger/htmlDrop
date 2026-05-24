@@ -42,8 +42,8 @@ npm run release        # bump patch version, build everything, push DMG to GitHu
 | `finder/icon.icns` | `icon.png` | macOS app icon + Finder Share menu |
 | `finder/HTMLDrop.workflow/Contents/Resources/icon.icns` | `icon.png` | Quick Action icon |
 | `pluginIcon.png` / `pluginIcon@2x.png` | `icon.png` | WebStorm plugin settings icon |
-| `icons/icon16.png` | manual — do not overwrite | WebStorm context menu icon (light theme) |
-| `icons/icon16_dark.png` | `icon16.png` negated | WebStorm context menu icon (dark theme, white logo) |
+| `icons/icon16.png` / `icon16@2x.png` | `icon_source.png` (16 / 32 px) | WebStorm context menu icon (light theme) |
+| `icons/icon16_dark.png` / `icon16_dark@2x.png` | `icon16.png` negated | WebStorm context menu icon (dark theme, white logo) |
 
 Run `npm run icon` to regenerate all icons from source.
 
