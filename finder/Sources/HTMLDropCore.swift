@@ -5,11 +5,70 @@ import Security
 import CommonCrypto
 import CryptoKit
 
+// MARK: - Service
+
+struct UploadService {
+    let name: String
+    let uploadURL: String
+    let supportsServerPassword: Bool
+
+    static let pagedrop = UploadService(
+        name: "pagedrop",
+        uploadURL: "https://pagedrop.io/api/upload",
+        supportsServerPassword: true
+    )
+
+    static let freekit = UploadService(
+        name: "freekit",
+        uploadURL: "https://freekit.dev/api/v1/sites",
+        supportsServerPassword: true
+    )
+
+    private static let registry: [String: UploadService] = [
+        "pagedrop": .pagedrop,
+        "freekit":  .freekit,
+    ]
+
+    static func named(_ name: String) -> UploadService? { registry[name] }
+}
+
+// Walk up the directory tree from `path` looking for htmldrop.json
+func findService(startingAt path: String) -> UploadService {
+    var dir = URL(fileURLWithPath: path).deletingLastPathComponent()
+    for _ in 0..<10 {
+        let config = dir.appendingPathComponent("settings.json")
+        if let data = try? Data(contentsOf: config),
+           let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+           let name = json["provider"] as? String,
+           let service = UploadService.named(name) {
+            return service
+        }
+        let parent = dir.deletingLastPathComponent()
+        if parent == dir { break }
+        dir = parent
+    }
+    return .pagedrop
+}
+
 // MARK: - Upload
 
-func htmlDropUpload(_ html: String) throws -> String {
-    let json = "{\"html\":\(jsonEscape(html)),\"ttl\":\"3d\"}"
-    var req = URLRequest(url: URL(string: "https://pagedrop.io/api/upload")!)
+func htmlDropUpload(_ html: String, password: String = "", service: UploadService = .freekit) throws -> String {
+    let uploadHtml: String
+    let apiPassword: String
+    if password.isEmpty {
+        uploadHtml = html
+        apiPassword = ""
+    } else if service.supportsServerPassword {
+        uploadHtml = html
+        apiPassword = password
+    } else {
+        uploadHtml = try encryptHtml(html, password: password)
+        apiPassword = ""
+    }
+    var jsonParts = "\"html\":\(jsonEscape(uploadHtml)),\"ttl\":\"3d\""
+    if !apiPassword.isEmpty { jsonParts += ",\"password\":\(jsonEscape(apiPassword))" }
+    let json = "{\(jsonParts)}"
+    var req = URLRequest(url: URL(string: service.uploadURL)!)
     req.httpMethod = "POST"
     req.setValue("application/json", forHTTPHeaderField: "Content-Type")
     req.httpBody = Data(json.utf8)

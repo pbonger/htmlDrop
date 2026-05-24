@@ -27,6 +27,21 @@ import javax.crypto.SecretKeyFactory
 import javax.crypto.spec.GCMParameterSpec
 import javax.crypto.spec.SecretKeySpec
 
+data class UploadService(
+    val name: String,
+    val uploadUrl: String,
+    val supportsServerPassword: Boolean
+) {
+    companion object {
+        val PAGEDROP = UploadService("pagedrop", "https://pagedrop.io/api/upload", true)
+        val FREEKIT  = UploadService("freekit",  "https://freekit.dev/api/v1/sites", true)
+
+        private val registry = listOf(PAGEDROP, FREEKIT).associateBy { it.name }
+
+        fun named(name: String): UploadService? = registry[name]
+    }
+}
+
 class ShareOnHTMLDropAction : AnAction() {
 
     override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
@@ -46,9 +61,14 @@ class ShareOnHTMLDropAction : AnAction() {
             override fun run(indicator: ProgressIndicator) {
                 runCatching {
                     val html = file.contentsToByteArray().toString(Charsets.UTF_8)
-                    val content = if (password.isNotEmpty()) encrypt(html, password) else html
+                    val service = loadService(project)
+                    val (content, apiPassword) = when {
+                        password.isEmpty() -> Pair(html, "")
+                        service.supportsServerPassword -> Pair(html, password)
+                        else -> Pair(encrypt(html, password), "")
+                    }
                     indicator.text = "Uploading to HTML Drop…"
-                    val url = upload(content)
+                    val url = upload(content, apiPassword, service)
                     ApplicationManager.getApplication().invokeLater { copyToClipboard(url) }
                     val msg = if (password.isNotEmpty()) "URL copied to clipboard (password protected)" else "URL copied to clipboard"
                     notifyWithLink(project, "Shared on HTML Drop", msg, url, NotificationType.INFORMATION)
@@ -57,6 +77,14 @@ class ShareOnHTMLDropAction : AnAction() {
                 }
             }
         })
+    }
+
+    private fun loadService(project: Project): UploadService {
+        val config = project.basePath?.let { java.io.File(it, "settings.json") }
+            ?.takeIf { it.exists() } ?: return UploadService.PAGEDROP
+        val name = Regex(""""provider"\s*:\s*"([^"]+)"""").find(config.readText())
+            ?.groupValues?.get(1) ?: return UploadService.PAGEDROP
+        return UploadService.named(name) ?: UploadService.PAGEDROP
     }
 
     private fun encrypt(html: String, password: String): String {
@@ -122,11 +150,16 @@ document.getElementById('p').addEventListener('keydown',e=>{if(e.key==='Enter')g
 </body>
 </html>"""
 
-    private fun upload(html: String): String {
-        val json = """{"html":${jsonString(html)},"ttl":"3d"}"""
+    private fun upload(html: String, password: String, service: UploadService): String {
+        val json = buildString {
+            append("{\"html\":"); append(jsonString(html))
+            append(",\"ttl\":\"3d\"")
+            if (password.isNotEmpty()) { append(",\"password\":"); append(jsonString(password)) }
+            append("}")
+        }
         val client = HttpClient.newHttpClient()
         val request = HttpRequest.newBuilder()
-            .uri(URI.create("https://pagedrop.io/api/upload"))
+            .uri(URI.create(service.uploadUrl))
             .header("Content-Type", "application/json")
             .POST(HttpRequest.BodyPublishers.ofString(json))
             .build()

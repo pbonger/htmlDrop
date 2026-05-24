@@ -82,10 +82,10 @@ guard filePath.lowercased().hasSuffix(".html") else {
 guard let password = confirmShare() else { exit(0) }
 
 do {
-    notify("HTML Drop", password.isEmpty ? "Uploading…" : "Encrypting and uploading…")
+    notify("HTML Drop", "Uploading…")
     let html    = try String(contentsOfFile: filePath, encoding: .utf8)
-    let content = password.isEmpty ? html : (try encryptHtml(html, password: password))
-    let url     = try htmlDropUpload(content)
+    let service = findService(startingAt: filePath)
+    let url     = try htmlDropUpload(html, password: password, service: service)
     copyToClipboard(url)
     notify("Shared on HTML Drop",
            password.isEmpty ? "URL copied to clipboard" : "URL copied to clipboard (password protected)",

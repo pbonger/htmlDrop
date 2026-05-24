@@ -9,7 +9,7 @@ Share any `.html` file to [pagedrop.io](https://pagedrop.io) in one click — fr
 | Path | What it is |
 |---|---|
 | `src/main/kotlin/htmldrop/` | WebStorm plugin (Kotlin) |
-| `finder/Sources/` | Swift CLI used by the Finder Quick Action |
+| `finder/Sources/` | Swift CLI (SPM package) used by the Finder Quick Action |
 | `finder/Extension/` | macOS Share Extension (shown in Finder's Share button) |
 | `finder/App/` | Minimal host app required to carry the Share Extension |
 | `finder/HTMLDrop.workflow/` | Automator Quick Action — installs to `~/Library/Services/` |
@@ -28,9 +28,24 @@ Share any `.html` file to [pagedrop.io](https://pagedrop.io) in one click — fr
 npm run build          # compile WebStorm plugin → build/distributions/html-drop-plugin-*.zip
 npm run build:app      # compile + bundle + sign HTMLDrop.app (Share Extension)
 npm run update:app     # build:app, install to /Applications, re-register extension
-npm run package:dmg    # build .pkg and assemble final DMG
+npm run icon           # regenerate all icons from source (see Icon sources below)
+npm run package:pkg    # build .pkg only (no DMG)
+npm run package:all    # build .pkg + zip bundle (plugin zip + pkg, no DMG)
+npm run package:dmg    # build .pkg and assemble final DMG (used by release)
 npm run release        # bump patch version, build everything, push DMG to GitHub Releases
 ```
+
+### Icon sources
+
+| Output | Source | Use |
+|---|---|---|
+| `finder/icon.icns` | `icon.png` | macOS app icon + Finder Share menu |
+| `finder/HTMLDrop.workflow/Contents/Resources/icon.icns` | `icon.png` | Quick Action icon |
+| `pluginIcon.png` / `pluginIcon@2x.png` | `icon.png` | WebStorm plugin settings icon |
+| `icons/icon16.png` | `icon_black.png` | WebStorm context menu icon (light theme, black logo) |
+| `icons/icon16_dark.png` | `icon16.png` negated | WebStorm context menu icon (dark theme, white logo) |
+
+All source images live in `src/main/resources/icons/`. Run `npm run icon` to regenerate everything.
 
 ### Breakdown of `npm run release`
 1. `npm version patch` — bumps `package.json` and syncs `build.gradle.kts`
@@ -86,8 +101,8 @@ Both the plugin and the Swift CLI use identical crypto:
 | `ShareOnHTMLDropAction.kt` | Context menu action, upload, encrypt, notify |
 | `PasswordDialog.kt` | Password prompt (`JPasswordField`) |
 | `plugin.xml` | Plugin descriptor — id `com.pbonger.html-drop`, action registration |
-| `pluginIcon.png` / `pluginIcon@2x.png` | Plugin icon in WebStorm settings (40 × 40) |
-| `icons/icon16.png` / `icon16_dark.png` | Context menu icon (16 × 16, light + dark variants) |
+| `pluginIcon.png` / `pluginIcon@2x.png` | Plugin icon in WebStorm settings (40 × 40) — from `icon.png` |
+| `icons/icon16.png` | Context menu icon (16 × 16) — from `icon_black.png` |
 
 ### Known build quirks
 - `instrumentCode` and `buildSearchableOptions` are **disabled** — `java-compiler-ant-tasks` for build 243 is not in JetBrains repos
@@ -124,7 +139,7 @@ The extension binary is linked with `-Xlinker -e -Xlinker _NSExtensionMain` and 
 
 ### `ShareViewController.swift` flow
 1. `beginRequest(with:)` — detects `public.html` vs `public.file-url` attachment
-2. `loadViaFileRepresentation` (preferred) — creates a sandboxed temp copy the extension can read; resolves the display filename from `public.file-url`
+2. `loadViaFileRepresentation` — used when `public.html` type is present; loads a sandboxed temp copy and resolves the display filename via `public.file-url`; OR `loadViaFileURL` fallback when only `public.file-url` is available
 3. `showShareDialog` — NSAlert with Share / Add Password… / Cancel
 4. `showPasswordDialog` — NSAlert + NSSecureTextField
 5. `upload(html:password:context:)` — encrypt if needed → `htmlDropUpload()` → copy URL → `showSuccess`
@@ -178,8 +193,7 @@ Background image shows 5 install steps:
 
 ## Security
 
-- No credentials anywhere in this repo — pagedrop.io requires no auth
-- There are no `Credentials.swift` or `Credentials.kt` files (those were Netlify-era, now gone)
+- No credentials in this repo — pagedrop.io requires no auth
 - Passwords entered by the user are never transmitted — only the encrypted ciphertext is uploaded
 
 ---
@@ -190,6 +204,6 @@ Background image shows 5 install steps:
 finder/.build/          # Swift SPM build artefacts
 finder/.build-app/      # swiftc intermediate objects
 finder/HTMLDrop.app/    # built app (generated)
-finder/icon.icns        # generated from icon_transparent.png
+finder/icon.icns        # generated from icon.png
 build/                  # Gradle + pkg + DMG output
 ```

@@ -19,6 +19,12 @@ APPEX="$APP/Contents/PlugIns/${EXT_NAME}.appex"
 rm -rf "$TMP" "$APP"
 mkdir -p "$TMP"
 
+# ── Bake provider from settings.json ─────────────────────────────────────────
+SETTINGS="$DIR/../settings.json"
+PROVIDER=$(node -p "require('$SETTINGS').provider" 2>/dev/null || echo "freekit")
+echo "▸ Provider: $PROVIDER"
+printf 'let currentProvider = "%s"\n' "$PROVIDER" > "$TMP/Config.swift"
+
 # ── Extension ────────────────────────────────────────────────────────────────
 echo "▸ Compiling extension…"
 "$SWIFTC" \
@@ -27,6 +33,7 @@ echo "▸ Compiling extension…"
   -parse-as-library \
   "$DIR/Sources/HTMLDropCore.swift" \
   "$DIR/Extension/ShareViewController.swift" \
+  "$TMP/Config.swift" \
   -framework Foundation -framework AppKit -framework Security -framework CryptoKit \
   -Xlinker -e -Xlinker _NSExtensionMain \
   -o "$TMP/$EXT_NAME"
