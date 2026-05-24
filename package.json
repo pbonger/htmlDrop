@@ -1,6 +1,6 @@
 {
   "name": "html-drop-plugin",
-  "version": "1.0.40",
+  "version": "1.0.41",
   "description": "WebStorm plugin — right-click any HTML file to share on HTML Drop",
   "scripts": {
     "install": "brew install openjdk@21 gradle gh || true && gh auth login && gradle wrapper --gradle-version 8.8",
