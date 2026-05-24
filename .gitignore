@@ -14,4 +14,7 @@ finder/icon.icns
 # Generated icons (npm run icon)
 src/main/resources/META-INF/pluginIcon.png
 src/main/resources/META-INF/pluginIcon@2x.png
+src/main/resources/icons/icon16.png
+src/main/resources/icons/icon16@2x.png
 src/main/resources/icons/icon16_dark.png
+src/main/resources/icons/icon16_dark@2x.png
