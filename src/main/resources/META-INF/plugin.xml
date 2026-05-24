@@ -17,7 +17,7 @@
         <action id="htmldrop.ShareOnHTMLDropAction"
                 class="htmldrop.ShareOnHTMLDropAction"
                 icon="/icons/icon16.png"
-                text="Share on HTML Drop"
+                text="HTML Drop"
                 description="Upload this HTML file to HTML Drop and copy the URL to clipboard">
             <add-to-group group-id="ProjectViewPopupMenu" anchor="last"/>
             <add-to-group group-id="EditorPopupMenu" anchor="last"/>
