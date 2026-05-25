@@ -114,6 +114,7 @@ hdiutil detach "$DEVICE"
 sleep 2
 
 echo "→ Converting to compressed read-only DMG..."
+rm -f "$DMG_FINAL"
 hdiutil convert "$DMG_TMP" -format UDZO -imagekey zlib-level=9 -o "$DMG_FINAL"
 
 echo ""
