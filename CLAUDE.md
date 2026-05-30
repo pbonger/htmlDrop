@@ -207,3 +207,34 @@ finder/HTMLDrop.app/    # built app (generated)
 finder/icon.icns        # generated from icon.png
 build/                  # Gradle + pkg + DMG output
 ```
+
+
+---
+
+## Code Quality Conventions
+
+> These apply to all projects. Learned from building complex features with AI assistance.
+
+### 1. Propose abstraction early
+Any pattern that appears **twice** → propose extracting it. Do not wait for the third instance. This applies to: components, hooks, utility functions, constants, API call patterns.
+
+### 2. No hardcoded details
+- **Design tokens**: colors, font sizes, spacing, opacity values belong in a single config/theme file — not scattered as literals across components
+- **Feature constants**: damage values, durations, thresholds, limits → named constants in one place
+- **If a value appears in more than one file**: it needs a home. `const X = 0.6` in two files is a bug waiting to happen.
+
+### 3. Single source of truth
+If the same logic or value exists in more than one place, consolidate it. Examples from practice:
+- Ability durations → `ABILITY_DURATION` constant, all code reads from it
+- Vibe calculation → `calcCurrentVibe()` in one file, imported everywhere
+- Card hover behaviour → `useCardHover` hook + `CardBase` component
+
+### 4. Inheritance over duplication
+Before building a third component that looks like the first two, stop and extract a base. In React this means:
+- Shared hooks for behaviour (`useCardHover`)
+- Context for parent→child state (`CardHoverContext`)
+- Base components for shared structure (`CardBase`)
+- Shared link components for consistent interaction patterns (`CardLink`)
+
+### 5. Check all variables
+When randomizing, parameterizing, or overriding behaviour — enumerate ALL inputs and consciously decide each one. Do not stop at the obvious ones.
